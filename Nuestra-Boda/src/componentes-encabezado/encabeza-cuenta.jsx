@@ -1,94 +1,59 @@
 import { useEffect, useState } from "react";
-import React from "react";
+import { useIdioma } from "../context/IdiomaContext";
 
-const Countdown = ({ targetDate }) => {
-  const calculateTime = () => {
-    const difference = +new Date(targetDate) - +new Date();
-    let timeLeft = {};
+function tiempoRestante(targetDate) {
+  const diferencia = Math.max(0, new Date(targetDate).getTime() - Date.now());
 
-    if (difference > 0) {
-      timeLeft = {
-        dias: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        horas: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        min: Math.floor((difference / 1000 / 60) % 60),
-        seg: Math.floor((difference / 1000) % 60),
-      };
-    }
-    return timeLeft;
+  return {
+    dias: Math.floor(diferencia / 86400000),
+    horas: Math.floor((diferencia / 3600000) % 24),
+    minutos: Math.floor((diferencia / 60000) % 60),
+    segundos: Math.floor((diferencia / 1000) % 60),
+    terminado: diferencia === 0,
   };
+}
 
-  const [timeLeft, setTimeLeft] = useState(calculateTime());
+export default function Countdown({ targetDate }) {
+  const { idioma } = useIdioma();
+  const [tiempo, setTiempo] = useState(() => tiempoRestante(targetDate));
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setTimeLeft(calculateTime());
+    setTiempo(tiempoRestante(targetDate));
+    const intervalo = window.setInterval(() => {
+      setTiempo(tiempoRestante(targetDate));
     }, 1000);
+    return () => window.clearInterval(intervalo);
+  }, [targetDate]);
 
-    return () => clearTimeout(timer);
-  }, [timeLeft]);
+  const etiquetas = idioma === "en"
+    ? ["Days", "Hours", "Minutes", "Seconds"]
+    : ["Días", "Horas", "Minutos", "Segundos"];
+  const valores = [tiempo.dias, tiempo.horas, tiempo.minutos, tiempo.segundos];
 
   return (
-    <section className="w-full flex justify-center">
-      <div className="font-playfair w-full max-w-md px-2">
-
-        {/* FLEX SIEMPRE EN LÍNEA */}
-        <div className="flex justify-between items-center gap-2">
-
-          {Object.keys(timeLeft).map((interval, index) => (
-            <React.Fragment key={interval}>
-
-              {/* BLOQUE */}
-              <div className="
-                flex flex-col items-center justify-center
-                bg-white/10 backdrop-blur-md
-                px-2 py-2 sm:px-3 sm:py-3
-                rounded-xl
-                flex-1
-              ">
-
-                {/* NÚMERO */}
-                <span className="
-                  text-white font-bold
-                  text-xl sm:text-2xl md:text-4xl
-                ">
-                  {timeLeft[interval]}
-                </span>
-
-                {/* LABEL */}
-                <span className="
-                  text-white uppercase tracking-widest
-                  text-[9px] sm:text-xs
-                  opacity-80
-                ">
-                  {interval}
-                </span>
-
-              </div>
-
-              {/* ":" */}
-              {index < Object.keys(timeLeft).length - 1 && (
-                <span className="
-                  text-lg sm:text-2xl
-                  text-[#9E8E7B] opacity-80
-                ">
-                  :
-                </span>
-              )}
-
-            </React.Fragment>
+    <section className="w-full" aria-label={idioma === "en" ? "Wedding countdown" : "Cuenta regresiva para la boda"}>
+      {tiempo.terminado ? (
+        <p className="text-center font-serif text-lg sm:text-2xl" style={{ color: "#D6D2C4" }}>
+          {idioma === "en" ? "Our special day is here!" : "¡Llegó nuestro gran día!"}
+        </p>
+      ) : (
+        <div className="mx-auto grid w-full max-w-xl grid-cols-4 gap-1.5 sm:gap-3">
+          {valores.map((valor, indice) => (
+            <div
+              key={etiquetas[indice]}
+              className="flex min-w-0 flex-col items-center justify-center rounded-xl border px-1 py-3 backdrop-blur-sm sm:py-4"
+              style={{ backgroundColor: "rgba(106,44,62,0.82)", borderColor: "rgba(214,210,196,0.6)" }}
+            >
+              <span className="font-serif text-2xl font-semibold leading-none tabular-nums sm:text-4xl" style={{ color: "#D6D2C4" }}>
+                {String(valor).padStart(2, "0")}
+              </span>
+              <span className="mt-2 max-w-full text-[8px] uppercase tracking-[0.06em] sm:text-[10px] sm:tracking-[0.16em]" style={{ color: "#EEEAE0" }}>
+                {etiquetas[indice]}
+              </span>
+            </div>
           ))}
         </div>
-
-        {/* FINAL */}
-        {Object.keys(timeLeft).length === 0 && (
-          <span className="text-white mt-4 text-center block">
-            ¡Llegó el gran día! 🎉
-          </span>
-        )}
-
-      </div>
+      )}
     </section>
   );
-};
-
-export default Countdown;
+}
