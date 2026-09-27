@@ -1045,7 +1045,7 @@ useEffect(() => {
       >
         {/* FOTOGRAFÍA */}
         <motion.img
-          src="/Portada.png"
+          src="/Portadav.png"
           alt="Susana y Gnana"
           className="
             absolute
