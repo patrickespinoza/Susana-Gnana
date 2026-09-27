@@ -2,11 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Countdown from "./encabeza-cuenta";
 import { useIdioma } from "../context/IdiomaContext";
-
 /* =========================================
    PORTADA CLÁSICA EDITORIAL
 ========================================= */
-
 const palette = {
   ink: "#6A2C3E",
   inkSoft: "#512131",
@@ -18,12 +16,10 @@ const palette = {
   warmGray: "#594B4C",
   line: "#A79BA0",
 };
-
 const transition = {
   duration: 0.9,
   ease: [0.22, 1, 0.36, 1],
 };
-
 function CornerOrnament({ className = "" }) {
   return (
     <svg
@@ -37,21 +33,17 @@ function CornerOrnament({ className = "" }) {
         stroke="currentColor"
         strokeWidth="1"
       />
-
       <path
         d="M13 64V29c0-8.8 7.2-16 16-16h35"
         stroke="currentColor"
         strokeWidth="0.65"
       />
-
       <path
         d="M25 4c0 11.6-9.4 21-21 21"
         stroke="currentColor"
         strokeWidth="0.7"
       />
-
       <circle cx="13" cy="13" r="1.8" fill="currentColor" />
-
       <path
         d="M18 18c10 3 17 10 20 20"
         stroke="currentColor"
@@ -60,7 +52,6 @@ function CornerOrnament({ className = "" }) {
     </svg>
   );
 }
-
 function DecorativeDivider({ dark = false }) {
   return (
     <div className="flex w-full items-center justify-center gap-3">
@@ -72,7 +63,6 @@ function DecorativeDivider({ dark = false }) {
             : "linear-gradient(to right, transparent, rgba(106,44,62,0.65))",
         }}
       />
-
       <span
         className="h-[5px] w-[5px] rotate-45 border"
         style={{
@@ -81,7 +71,6 @@ function DecorativeDivider({ dark = false }) {
             : "rgba(106,44,62,0.7)",
         }}
       />
-
       <span
         className="h-px w-10 sm:w-16"
         style={{
@@ -93,74 +82,59 @@ function DecorativeDivider({ dark = false }) {
     </div>
   );
 }
-
 export default function Portada() {
   const audioRef = useRef(null);
   const { idioma } = useIdioma();
   // 14 de febrero de 2027, 17:00 h (zona horaria de Ciudad de México).
   const fechaEvento = "2027-02-14T17:00:00-06:00";
   const t = (es, en) => idioma === "en" ? en : es;
-
   const [introActiva, setIntroActiva] = useState(true);
   const [mostrarContenido, setMostrarContenido] = useState(false);
   const [abrirSobre, setAbrirSobre] = useState(false);
   const [procesandoApertura, setProcesandoApertura] = useState(false);
-
   const [invitados, setInvitados] = useState("Invitado");
   const [pases, setPases] = useState(1);
-
   /* =========================================
      DATOS PERSONALIZADOS DESDE LA URL
   ========================================= */
-
   useEffect(() => {
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
-
   if (!id) {
     setInvitados("Invitado");
     setPases(1);
     return;
   }
-
   try {
     // Recuperar caracteres que pudieron cambiar dentro de la URL.
     const idNormalizado = decodeURIComponent(id)
       .replace(/-/g, "+")
       .replace(/_/g, "/");
-
     // Agregar padding de Base64 cuando sea necesario.
     const paddingFaltante = idNormalizado.length % 4;
     const idConPadding =
       paddingFaltante === 0
         ? idNormalizado
         : idNormalizado + "=".repeat(4 - paddingFaltante);
-
     // Decodificar Base64.
     const binario = atob(idConPadding);
     const bytes = Uint8Array.from(binario, (caracter) => caracter.charCodeAt(0));
     const textoInvertido = new TextDecoder("utf-8").decode(bytes);
-
     // Volver al orden original.
     const textoOriginal = textoInvertido
       .split("")
       .reverse()
       .join("");
-
     // Recuperar los datos.
     const datos = JSON.parse(textoOriginal);
-
     const nombreDecodificado =
       typeof datos.nombre === "string"
         ? datos.nombre.trim()
         : "";
-
     const pasesDecodificados = Number.parseInt(datos.pases, 10);
-
     if (nombreDecodificado) {
       setInvitados(nombreDecodificado);
     }
-
     if (
       !Number.isNaN(pasesDecodificados) &&
       pasesDecodificados > 0
@@ -172,31 +146,23 @@ export default function Portada() {
       "No se pudieron decodificar los datos de la invitación:",
       error
     );
-
     setInvitados("Invitado");
     setPases("");
   }
 }, []);
-
-
 useEffect(() => {
   if (!introActiva) return;
-
   const scrollAnterior = window.scrollY;
-
   document.body.style.overflow = "hidden";
   document.documentElement.style.overflow = "hidden";
-
   window.scrollTo({
     top: 0,
     left: 0,
     behavior: "auto",
   });
-
   return () => {
     document.body.style.overflow = "";
     document.documentElement.style.overflow = "";
-
     window.scrollTo({
       top: scrollAnterior > 0 ? 0 : scrollAnterior,
       left: 0,
@@ -207,20 +173,15 @@ useEffect(() => {
   /* =========================================
      ABRIR INVITACIÓN
   ========================================= */
-
   const iniciarExperiencia = () => {
   if (procesandoApertura || abrirSobre) return;
-
   setProcesandoApertura(true);
-
   window.scrollTo({
     top: 0,
     left: 0,
     behavior: "auto",
   });
-
   setAbrirSobre(true);
-
   // Reproducir dentro del gesto del usuario permite el audio en móviles.
   if (audioRef.current) {
     audioRef.current.volume = 0.45;
@@ -228,20 +189,17 @@ useEffect(() => {
       console.warn("No se pudo reproducir el audio:", error);
     });
   }
-
   window.setTimeout(() => {
     window.scrollTo({
       top: 0,
       left: 0,
       behavior: "auto",
     });
-
     setIntroActiva(false);
     setMostrarContenido(true);
     setProcesandoApertura(false);
   }, 1900);
 };
-
   return (
     <div
       className="
@@ -256,15 +214,12 @@ useEffect(() => {
       }}
     >
       {/* AUDIO */}
-
       <audio ref={audioRef} loop preload="auto">
         <source src="/TylerShaw.mp3" type="audio/mpeg" />
       </audio>
-
       {/* =========================================
           INTRO DEL SOBRE
       ========================================= */}
-
       <AnimatePresence mode="wait">
         {introActiva && (
           <motion.section
@@ -309,7 +264,6 @@ useEffect(() => {
   }}
 >
             {/* MARCO EXTERIOR */}
-
             <div
               className="
                 pointer-events-none
@@ -323,7 +277,6 @@ useEffect(() => {
                 borderColor: "rgba(106,44,62,0.3)",
               }}
             />
-
             <div
               className="
                 pointer-events-none
@@ -337,7 +290,6 @@ useEffect(() => {
                 borderColor: "rgba(106,44,62,0.12)",
               }}
             />
-
             <CornerOrnament
               className="
                 pointer-events-none
@@ -353,7 +305,6 @@ useEffect(() => {
                 sm:w-20
               "
             />
-
             <CornerOrnament
               className="
                 pointer-events-none
@@ -370,7 +321,6 @@ useEffect(() => {
                 sm:w-20
               "
             />
-
             <CornerOrnament
               className="
                 pointer-events-none
@@ -387,7 +337,6 @@ useEffect(() => {
                 sm:w-20
               "
             />
-
             <CornerOrnament
               className="
                 pointer-events-none
@@ -404,7 +353,6 @@ useEffect(() => {
                 sm:w-20
               "
             />
-
             <div
               className="
                 relative
@@ -422,7 +370,6 @@ useEffect(() => {
               "
             >
               {/* PRESENTACIÓN */}
-
               <motion.div
                 className="
                   order-1
@@ -451,7 +398,6 @@ useEffect(() => {
                 >
                   {t("Invitación de boda", "Wedding invitation")}
                 </p>
-
                 <div
                   className="
                     mt-3
@@ -464,7 +410,6 @@ useEffect(() => {
                     backgroundColor: "rgba(106,44,62,0.7)",
                   }}
                 />
-
                 <p
                   className="
                     mt-3
@@ -479,7 +424,6 @@ useEffect(() => {
                 >
                   {t("Junto con nuestras familias", "Together with our families")}
                 </p>
-
                 <h1
                   className="
                     mt-3
@@ -498,7 +442,6 @@ useEffect(() => {
                 >
                   Susana
                 </h1>
-
                 <span
                   className="
                     my-1
@@ -511,7 +454,6 @@ useEffect(() => {
                 >
                   &
                 </span>
-
                 <h1
                   className="
                     font-serif
@@ -528,11 +470,9 @@ useEffect(() => {
                 >
                   Gnana
                 </h1>
-
                 <div className="mt-4 w-full max-w-[220px] sm:mt-8 sm:max-w-[260px]">
                   <DecorativeDivider />
                 </div>
-
                 <p
                   className="
                     mt-3
@@ -547,7 +487,6 @@ useEffect(() => {
                 >
                   {t("14 · Febrero · 2027", "February 14 · 2027")}
                 </p>
-
                 <p
                   className="
                     mt-3
@@ -565,9 +504,7 @@ useEffect(() => {
                   {t("Hay momentos que cambian nuestra historia para siempre. Queremos compartir este con ustedes.", "Some moments change our story forever. We would love to share this one with you.")}
                 </p>
               </motion.div>
-
               {/* SOBRE E INFORMACIÓN DEL INVITADO */}
-
               <motion.div
                 className="
                   order-2
@@ -612,7 +549,6 @@ useEffect(() => {
                   }}
                 >
                   {/* SOMBRA DEL SOBRE */}
-
                   <div
                     className="
                       absolute
@@ -626,9 +562,7 @@ useEffect(() => {
                       blur-2xl
                     "
                   />
-
                   {/* CARTA INTERIOR */}
-
                   <motion.div
                     className="
                       absolute
@@ -680,7 +614,6 @@ useEffect(() => {
                         text-[#6A2C3E]/35
                       "
                     />
-
                     <CornerOrnament
                       className="
                         absolute
@@ -692,7 +625,6 @@ useEffect(() => {
                         text-[#6A2C3E]/35
                       "
                     />
-
                     <p
                       className="
                         text-[7px]
@@ -704,7 +636,6 @@ useEffect(() => {
                     >
                       {t("La boda de", "The wedding of")}
                     </p>
-
                     <div
                       className="
                         my-4
@@ -715,7 +646,6 @@ useEffect(() => {
                         backgroundColor: "rgba(106,44,62,0.65)",
                       }}
                     />
-
                     <p
                       className="
                         font-serif
@@ -727,7 +657,6 @@ useEffect(() => {
                     >
                       Susana
                     </p>
-
                     <span
                       className="
                         my-0.5
@@ -739,7 +668,6 @@ useEffect(() => {
                     >
                       &
                     </span>
-
                     <p
                       className="
                         font-serif
@@ -751,7 +679,6 @@ useEffect(() => {
                     >
                       Gnana
                     </p>
-
                     <p
                       className="
                         mt-4
@@ -765,9 +692,7 @@ useEffect(() => {
                       {t("14 · 02 · 2027", "02 · 14 · 2027")}
                     </p>
                   </motion.div>
-
                   {/* CUERPO DEL SOBRE */}
-
                   <motion.div
                     className="
                       absolute
@@ -807,7 +732,6 @@ useEffect(() => {
                     }}
                   >
                     {/* TEXTURA DE PAPEL */}
-
                     <div
                       className="absolute inset-0 opacity-[0.15]"
                       style={{
@@ -822,9 +746,7 @@ useEffect(() => {
                         `,
                       }}
                     />
-
                     {/* SOLAPAS INFERIORES */}
-
                     <div
                       className="
                         absolute
@@ -841,7 +763,6 @@ useEffect(() => {
                           "linear-gradient(145deg, rgba(255,255,255,0.16), transparent)",
                       }}
                     />
-
                     <div
                       className="
                         absolute
@@ -859,9 +780,7 @@ useEffect(() => {
                       }}
                     />
                   </motion.div>
-
                   {/* TAPA DEL SOBRE */}
-
                   <motion.div
                     className="
                       absolute
@@ -901,9 +820,7 @@ useEffect(() => {
                       ease: [0.22, 1, 0.36, 1],
                     }}
                   />
-
                   {/* SELLO CLÁSICO */}
-
                   <motion.div
                     className="
                       pointer-events-none
@@ -970,7 +887,6 @@ useEffect(() => {
                           borderColor: "rgba(214,210,196,0.28)",
                         }}
                       />
-
                       <div
                         className="
                           relative
@@ -993,9 +909,7 @@ useEffect(() => {
                       </div>
                     </div>
                   </motion.div>
-
                   {/* TEXTO ABRIR */}
-
                   <motion.p
                     className="
                       pointer-events-none
@@ -1018,7 +932,6 @@ useEffect(() => {
                     {t("Abrir", "Open")}
                   </motion.p>
                 </div>
-
                 <motion.p
                   className="
                     mt-3
@@ -1037,9 +950,7 @@ useEffect(() => {
                 >
                   {t("Toca el sobre para comenzar", "Tap the envelope to begin")}
                 </motion.p>
-
                 {/* DATOS DEL INVITADO */}
-
                 <motion.div
                   className="
                     mt-3
@@ -1075,7 +986,6 @@ useEffect(() => {
                   >
                     {t("Reservado especialmente para", "Especially reserved for")}
                   </p>
-
                   <p
                     className="
                       mt-2
@@ -1089,7 +999,6 @@ useEffect(() => {
                   >
                     {invitados}
                   </p>
-
                   <div
                     className="
                       mx-auto
@@ -1102,7 +1011,6 @@ useEffect(() => {
                       backgroundColor: "rgba(106,44,62,0.6)",
                     }}
                   />
-
                   <p
                     className="
                       font-serif
@@ -1123,11 +1031,9 @@ useEffect(() => {
           </motion.section>
         )}
       </AnimatePresence>
-
       {/* =========================================
           PORTADA PRINCIPAL
       ========================================= */}
-
       <section
         className="
           relative
@@ -1138,9 +1044,8 @@ useEffect(() => {
         style={{ backgroundColor: palette.ink }}
       >
         {/* FOTOGRAFÍA */}
-
         <motion.img
-          src="/portada.png"
+          src="/Portada.png"
           alt="Susana y Gnana"
           className="
             absolute
@@ -1148,7 +1053,7 @@ useEffect(() => {
             h-full
             w-full
             object-cover
-            object-center
+            object-[35%_50%]
           "
           initial={{
             opacity: 0,
@@ -1173,38 +1078,7 @@ useEffect(() => {
             },
           }}
         />
-
-        {/* OVERLAY CINEMATOGRÁFICO DISCRETO */}
-
-        <motion.div
-          className="absolute inset-0"
-          style={{
-            background: `
-              linear-gradient(
-                180deg,
-                rgba(81,33,49,0.46) 0%,
-                rgba(81,33,49,0.12) 32%,
-                rgba(81,33,49,0.20) 54%,
-                rgba(81,33,49,0.82) 100%
-              ),
-              linear-gradient(
-                90deg,
-                rgba(81,33,49,0.18) 0%,
-                transparent 35%,
-                transparent 65%,
-                rgba(81,33,49,0.18) 100%
-              )
-            `,
-          }}
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: mostrarContenido ? 1 : 0,
-          }}
-          transition={{ duration: 1 }}
-        />
-
         {/* GRANO EDITORIAL */}
-
         <div
           className="
             pointer-events-none
@@ -1222,9 +1096,7 @@ useEffect(() => {
             backgroundSize: "5px 5px",
           }}
         />
-
         {/* MARCO */}
-
         <motion.div
           className="
             pointer-events-none
@@ -1247,9 +1119,7 @@ useEffect(() => {
             delay: 0.35,
           }}
         />
-
         {/* CONTENIDO */}
-
         <motion.div
           className="
 relative
@@ -1279,7 +1149,6 @@ lg:pt-20
           }}
         >
           {/* ENCABEZADO */}
-
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             animate={
@@ -1298,7 +1167,6 @@ lg:pt-20
               delay: 0.5,
             }}
           >
-           
             <div
               className="
                 mx-auto
@@ -1311,19 +1179,14 @@ lg:pt-20
                 backgroundColor: "rgba(214,210,196,0.7)",
               }}
             />
-
-
           </motion.div>
-
           {/* NOMBRES */}
-
           <motion.div
             className="
               flex
               max-w-4xl
               flex-col
               items-center
-              
             "
             initial={{ opacity: 0, y: 24 }}
             animate={
@@ -1343,8 +1206,6 @@ lg:pt-20
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-
-
             <h1
               className="
                 font-serif
@@ -1352,18 +1213,17 @@ lg:pt-20
                 font-normal
                 leading-[0.9]
                 tracking-[-0.035em]
-                text-[#EEEAE0]
+                text-[#6A2C3E]
                 sm:text-[72px]
                 md:text-[88px]
                 lg:text-[104px]
               "
               style={{
-                textShadow: "0 4px 24px rgba(0,0,0,0.32)",
+                textShadow: "0 1px 2px rgba(238,234,224,0.95), 0 0 18px rgba(238,234,224,0.85)",
               }}
             >
               Susana
             </h1>
-
             <div className="my-2 flex items-center gap-3 sm:my-4 sm:gap-6">
               <span
                 className="
@@ -1376,7 +1236,6 @@ lg:pt-20
                     "linear-gradient(to right, transparent, rgba(214,210,196,0.8))",
                 }}
               />
-
               <span
                 className="
                   font-cursiveDancing
@@ -1387,7 +1246,6 @@ lg:pt-20
               >
                 &
               </span>
-
               <span
                 className="
                   h-px
@@ -1400,7 +1258,6 @@ lg:pt-20
                 }}
               />
             </div>
-
             <h1
               className="
                 font-serif
@@ -1408,22 +1265,19 @@ lg:pt-20
                 font-normal
                 leading-[0.9]
                 tracking-[-0.035em]
-                text-[#EEEAE0]
+                text-[#6A2C3E]
                 sm:text-[72px]
                 md:text-[88px]
                 lg:text-[104px]
               "
               style={{
-                textShadow: "0 4px 24px rgba(0,0,0,0.32)",
+                textShadow: "0 1px 2px rgba(238,234,224,0.95), 0 0 18px rgba(238,234,224,0.85)",
               }}
             >
               Gnana
             </h1>
-
           </motion.div>
-
           {/* CONTADOR */}
-
           <motion.div
             className="
               w-full
@@ -1451,9 +1305,7 @@ lg:pt-20
               delay: 0.9,
             }}
           >
-
             {fechaEvento && <Countdown targetDate={fechaEvento} />}
-
             <motion.div
               className="
                 mt-4
@@ -1482,7 +1334,6 @@ lg:pt-20
               >
                 {t("Desliza para continuar", "Scroll to continue")}
               </p>
-
               <div
                 className="
                   mt-2
