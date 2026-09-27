@@ -5,12 +5,12 @@ import { useIdioma } from "../context/IdiomaContext";
 // Ajusta "position" por foto: "center 30%", "left center", "70% 45%", etc.
 const fotos = [
   { src: "/Carrusel01V.JPEG", position: "center center" },
-  { src: "/Carrusel02.JPEG", position: "60% center" },
+  { src: "/Carrusel02.JPEG", position: "center 60%" },
   { src: "/Carrusel03.JPEG", position: "center center" },
-  { src: "/Carrusel04.JPEG", position: "70% center" },
+  { src: "/Carrusel04.JPEG", position: "center 70%" },
   { src: "/Carrusel05.JPEG", position: "center center" },
   { src: "/Carrusel06.JPEG", position: "center center" },
-  { src: "/Carrusel07.JPEG", position: "60% center" },
+  { src: "/Carrusel07.JPEG", position: "center 60%" },
 ];
 
 const colores = {
