@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { enviarAccion } from "../bridgeSusana";
 
+const REGISTRO_ENTRADA_ACTIVO = false;
+
 const colores = {
   ivory: "#D6D2C4",
   claro: "#EEEAE0",
@@ -9,7 +11,7 @@ const colores = {
 };
 
 const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function Acceso() {
   const clave =
@@ -28,11 +30,11 @@ export default function Acceso() {
     if (!UUID.test(clave)) {
       setError("Código QR inválido.");
       setCargando(false);
-      return;
+      return undefined;
     }
 
     enviarAccion("consultar", { clave })
-      .then(respuesta => {
+      .then((respuesta) => {
         if (!activo) return;
 
         if (!respuesta?.ok) {
@@ -43,7 +45,7 @@ export default function Acceso() {
 
         setRegistro(respuesta);
       })
-      .catch(err => {
+      .catch((err) => {
         if (activo) setError(err.message);
       })
       .finally(() => {
@@ -55,10 +57,18 @@ export default function Acceso() {
     };
   }, [clave]);
 
+  // Se conserva para poder reactivar esta función más adelante.
   async function registrarEntrada(evento) {
     evento.preventDefault();
 
-    if (guardando || !registro || registro.entrada) return;
+    if (
+      !REGISTRO_ENTRADA_ACTIVO ||
+      guardando ||
+      !registro ||
+      registro.entrada
+    ) {
+      return;
+    }
 
     setGuardando(true);
     setError("");
@@ -76,9 +86,7 @@ export default function Acceso() {
         );
       }
 
-      const actual = await enviarAccion("consultar", {
-        clave,
-      });
+      const actual = await enviarAccion("consultar", { clave });
 
       if (!actual?.ok) {
         throw new Error(
@@ -90,24 +98,6 @@ export default function Acceso() {
       setPin("");
       setMensaje("Entrada familiar registrada en la hoja.");
     } catch (err) {
-      // Si se guardó antes de un fallo de red, evitamos repetir el registro.
-      try {
-        const actual = await enviarAccion("consultar", {
-          clave,
-        });
-
-        if (actual?.ok && actual.entrada) {
-          setRegistro(actual);
-          setPin("");
-          setMensaje(
-            "La entrada ya quedó registrada en la hoja."
-          );
-          return;
-        }
-      } catch {
-        // Conservamos el error inicial.
-      }
-
       setError(err.message);
     } finally {
       setGuardando(false);
@@ -140,7 +130,7 @@ export default function Acceso() {
           className="mt-4 text-center font-serif text-4xl"
           style={{ color: colores.burgundy }}
         >
-          Control de acceso
+          Información de la invitación
         </h1>
 
         {cargando && (
@@ -158,9 +148,7 @@ export default function Acceso() {
             <dl className="mt-8 grid grid-cols-2 gap-4 text-center">
               <div
                 className="rounded-xl p-4"
-                style={{
-                  backgroundColor: colores.ivory,
-                }}
+                style={{ backgroundColor: colores.ivory }}
               >
                 <dt className="text-xs uppercase tracking-wider">
                   Pases asignados
@@ -172,9 +160,7 @@ export default function Acceso() {
 
               <div
                 className="rounded-xl p-4"
-                style={{
-                  backgroundColor: colores.ivory,
-                }}
+                style={{ backgroundColor: colores.ivory }}
               >
                 <dt className="text-xs uppercase tracking-wider">
                   Confirmados
@@ -197,73 +183,86 @@ export default function Acceso() {
             </p>
 
             {registro.personas?.length > 0 && (
-              <ul className="mt-5 list-inside list-disc text-sm">
-                {registro.personas.map(
-                  (persona, indice) => (
-                    <li key={indice}>
+              <div className="mt-6">
+                <h3
+                  className="text-center font-serif text-lg"
+                  style={{ color: colores.burgundy }}
+                >
+                  Personas confirmadas
+                </h3>
+
+                <ul className="mt-3 list-inside list-disc text-sm">
+                  {registro.personas.map((persona, indice) => (
+                    <li key={`${persona.nombre}-${indice}`}>
                       {persona.nombre}
                     </li>
-                  )
-                )}
-              </ul>
+                  ))}
+                </ul>
+              </div>
             )}
 
-            {registro.entrada ? (
+            {!REGISTRO_ENTRADA_ACTIVO && (
               <p
-                className="mt-8 rounded-xl p-4 text-center font-semibold"
+                className="mt-8 rounded-xl p-4 text-center text-sm"
                 style={{
                   backgroundColor: colores.ivory,
                   color: colores.burgundy,
                 }}
               >
-                Entrada ya registrada ·{" "}
-                {registro.ingresados} personas
-              </p>
-            ) : registro.estado === "confirmada" ? (
-              <form
-                onSubmit={registrarEntrada}
-                className="mt-8"
-              >
-                <label
-                  className="block text-sm"
-                  htmlFor="host-pin"
-                >
-                  Clave de la host
-                </label>
-
-                <input
-                  id="host-pin"
-                  type="password"
-                  autoComplete="off"
-                  required
-                  value={pin}
-                  onChange={evento =>
-                    setPin(evento.target.value)
-                  }
-                  className="mt-2 w-full rounded-xl border bg-white px-4 py-3"
-                  style={{
-                    borderColor: colores.burgundy,
-                  }}
-                />
-
-                <button
-                  type="submit"
-                  disabled={guardando}
-                  className="mt-4 w-full rounded-full px-5 py-4 text-sm font-semibold text-white disabled:opacity-50"
-                  style={{
-                    backgroundColor: colores.burgundy,
-                  }}
-                >
-                  {guardando
-                    ? "Registrando…"
-                    : "Registrar entrada familiar"}
-                </button>
-              </form>
-            ) : (
-              <p className="mt-8 text-center text-sm">
-                Esta familia no tiene asistentes confirmados.
+                Consulta informativa. El control de entrada se realiza
+                manualmente.
               </p>
             )}
+
+            {REGISTRO_ENTRADA_ACTIVO &&
+              (registro.entrada ? (
+                <p
+                  className="mt-8 rounded-xl p-4 text-center font-semibold"
+                  style={{
+                    backgroundColor: colores.ivory,
+                    color: colores.burgundy,
+                  }}
+                >
+                  Entrada ya registrada · {registro.ingresados} personas
+                </p>
+              ) : registro.estado === "confirmada" ? (
+                <form onSubmit={registrarEntrada} className="mt-8">
+                  <label
+                    className="block text-sm"
+                    htmlFor="host-pin"
+                  >
+                    Clave de la host
+                  </label>
+
+                  <input
+                    id="host-pin"
+                    type="password"
+                    autoComplete="off"
+                    required
+                    value={pin}
+                    onChange={(evento) =>
+                      setPin(evento.target.value)
+                    }
+                    className="mt-2 w-full rounded-xl border bg-white px-4 py-3"
+                    style={{ borderColor: colores.burgundy }}
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={guardando}
+                    className="mt-4 w-full rounded-full px-5 py-4 text-sm font-semibold text-white disabled:opacity-50"
+                    style={{ backgroundColor: colores.burgundy }}
+                  >
+                    {guardando
+                      ? "Registrando…"
+                      : "Registrar entrada familiar"}
+                  </button>
+                </form>
+              ) : (
+                <p className="mt-8 text-center text-sm">
+                  Esta familia no tiene asistentes confirmados.
+                </p>
+              ))}
           </>
         )}
 
