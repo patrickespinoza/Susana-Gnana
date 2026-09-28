@@ -10,8 +10,9 @@ const colores = {
   texto: "#392C30",
 };
 
+// UUID: 8-4-4-4-12
 const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function Acceso() {
   const clave =
@@ -57,7 +58,7 @@ export default function Acceso() {
     };
   }, [clave]);
 
-  // Se conserva para poder reactivar esta función más adelante.
+  // Conservamos la función para poder reactivarla en el futuro.
   async function registrarEntrada(evento) {
     evento.preventDefault();
 
@@ -153,6 +154,7 @@ export default function Acceso() {
                 <dt className="text-xs uppercase tracking-wider">
                   Pases asignados
                 </dt>
+
                 <dd className="mt-2 font-serif text-3xl">
                   {registro.pases}
                 </dd>
@@ -165,6 +167,7 @@ export default function Acceso() {
                 <dt className="text-xs uppercase tracking-wider">
                   Confirmados
                 </dt>
+
                 <dd className="mt-2 font-serif text-3xl">
                   {registro.confirmados}
                 </dd>
