@@ -83,9 +83,17 @@ function activarFoto(estado, espacioNuevo, fotoNueva) {
   const indexes = [...estado.indexes];
   const ready = [...estado.ready];
 
-  // El espacio que deja la foto visible comienza a preparar la siguiente.
-  indexes[espacioAnterior] = siguiente(fotoNueva);
-  ready[espacioAnterior] = false;
+  const fotoParaPreparar = siguiente(fotoNueva);
+
+  /*
+   * Si el espacio anterior ya contiene esa misma fotografía,
+   * conserva ready=true. Su src no cambia y onLoad no volverá
+   * a ejecutarse.
+   */
+  if (indexes[espacioAnterior] !== fotoParaPreparar) {
+    indexes[espacioAnterior] = fotoParaPreparar;
+    ready[espacioAnterior] = false;
+  }
 
   return {
     active: espacioNuevo,
@@ -120,7 +128,7 @@ export default function Galeria() {
 
       const espacioOculto = 1 - estado.active;
 
-      // Ya está cargada detrás: cambiar inmediatamente.
+      // La fotografía solicitada ya está cargada detrás.
       if (
         estado.indexes[espacioOculto] === destino &&
         estado.ready[espacioOculto]
@@ -128,7 +136,7 @@ export default function Galeria() {
         return activarFoto(estado, espacioOculto, destino);
       }
 
-      // Ya se está cargando: dejar que termine.
+      // Ya solicitamos esa misma fotografía y sigue cargando.
       if (
         estado.indexes[espacioOculto] === destino &&
         estado.pending === destino
@@ -136,12 +144,14 @@ export default function Galeria() {
         return estado;
       }
 
-      // Cargar el destino sin quitar la foto que se está mostrando.
+      // Mantener visible la actual mientras carga la solicitada.
       const indexes = [...estado.indexes];
       const ready = [...estado.ready];
 
-      indexes[espacioOculto] = destino;
-      ready[espacioOculto] = false;
+      if (indexes[espacioOculto] !== destino) {
+        indexes[espacioOculto] = destino;
+        ready[espacioOculto] = false;
+      }
 
       return {
         ...estado,
@@ -154,7 +164,6 @@ export default function Galeria() {
 
   function imagenCargada(espacio, fotoIndice) {
     setCarrusel((estado) => {
-      // El usuario pudo solicitar otra foto mientras esta cargaba.
       if (estado.indexes[espacio] !== fotoIndice) {
         return estado;
       }
@@ -162,7 +171,6 @@ export default function Galeria() {
       const ready = [...estado.ready];
       ready[espacio] = true;
 
-      // Mostrarla si era la foto solicitada.
       if (
         estado.pending === fotoIndice &&
         espacio !== estado.active
@@ -184,8 +192,6 @@ export default function Galeria() {
         return estado;
       }
 
-      // Libera cualquier solicitud pendiente para que los controles
-      // y el cambio automático sigan funcionando.
       if (estado.pending === fotoIndice) {
         return { ...estado, pending: null };
       }
@@ -298,9 +304,6 @@ export default function Galeria() {
 
               return (
                 <img
-                  // Al cambiar de foto se crea un elemento nuevo,
-                  // por lo que onLoad vuelve a ejecutarse incluso
-                  // si la URL ya estaba en la caché.
                   key={`${espacio}-${fotoIndice}`}
                   src={foto.src}
                   alt={
@@ -333,7 +336,7 @@ export default function Galeria() {
             })}
           </div>
 
-          {/* Botones fuera de la fotografía */}
+          {/* Navegación fuera de la fotografía */}
           <div className="flex items-center justify-center gap-5 px-4 py-5 sm:gap-8 sm:py-7">
             <button
               type="button"
