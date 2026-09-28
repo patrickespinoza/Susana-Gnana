@@ -15,7 +15,7 @@ const fotos = [
   {
     src: "/Carrusel03.JPEG",
     position: "center center",
-    mobilePosition: "40% center",
+    mobilePosition: "60% center",
   },
   {
     src: "/Carrusel04.JPEG",
