@@ -450,7 +450,7 @@ useEffect(() => {
                     text-2xl
                     sm:text-4xl
                   "
-                  style={{ color: palette.antiqueGold }}
+                  style={{ color: palette.ink }}
                 >
                   &
                 </span>

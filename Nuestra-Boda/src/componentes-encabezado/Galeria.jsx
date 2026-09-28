@@ -70,21 +70,35 @@ function Flecha({ sentido }) {
   );
 }
 
-const indiceSiguiente = (indice) => (indice + 1) % fotos.length;
-const indiceAnterior = (indice) =>
-  (indice - 1 + fotos.length) % fotos.length;
+function siguiente(indice) {
+  return (indice + 1) % fotos.length;
+}
+
+function anterior(indice) {
+  return (indice - 1 + fotos.length) % fotos.length;
+}
+
+function activarFoto(estado, espacioNuevo, fotoNueva) {
+  const espacioAnterior = estado.active;
+  const indexes = [...estado.indexes];
+  const ready = [...estado.ready];
+
+  // El espacio que deja la foto visible comienza a preparar la siguiente.
+  indexes[espacioAnterior] = siguiente(fotoNueva);
+  ready[espacioAnterior] = false;
+
+  return {
+    active: espacioNuevo,
+    indexes,
+    ready,
+    pending: null,
+  };
+}
 
 export default function Galeria() {
   const { idioma } = useIdioma();
   const t = (es, en) => (idioma === "en" ? en : es);
 
-  /*
-   * Hay dos espacios para imágenes:
-   * - active indica cuál está visible.
-   * - indexes indica qué fotografía contiene cada espacio.
-   * - ready indica si cada fotografía terminó de cargar y decodificar.
-   * - pending guarda una solicitud manual mientras carga.
-   */
   const [carrusel, setCarrusel] = useState({
     active: 0,
     indexes: [0, 1],
@@ -93,50 +107,44 @@ export default function Galeria() {
   });
 
   const indiceActual = carrusel.indexes[carrusel.active];
-  const primeraLista = carrusel.ready[carrusel.active];
+  const fotoVisibleLista = carrusel.ready[carrusel.active];
 
   function cambiarA(destino) {
-    setCarrusel((actual) => {
+    setCarrusel((estado) => {
       if (
-        !actual.ready[actual.active] ||
-        actual.pending !== null ||
-        destino === actual.indexes[actual.active]
+        !estado.ready[estado.active] ||
+        destino === estado.indexes[estado.active]
       ) {
-        return actual;
+        return estado;
       }
 
-      const espacioOculto = 1 - actual.active;
+      const espacioOculto = 1 - estado.active;
 
-      // La foto solicitada ya está cargada detrás.
+      // Ya está cargada detrás: cambiar inmediatamente.
       if (
-        actual.indexes[espacioOculto] === destino &&
-        actual.ready[espacioOculto]
+        estado.indexes[espacioOculto] === destino &&
+        estado.ready[espacioOculto]
       ) {
-        const indexes = [...actual.indexes];
-        const ready = [...actual.ready];
-
-        // El espacio que deja la foto anterior prepara la próxima.
-        indexes[actual.active] = indiceSiguiente(destino);
-        ready[actual.active] = false;
-
-        return {
-          active: espacioOculto,
-          indexes,
-          ready,
-          pending: null,
-        };
+        return activarFoto(estado, espacioOculto, destino);
       }
 
-      // Para una foto no preparada, mantener la actual visible
-      // y cargar la solicitada en el espacio oculto.
-      const indexes = [...actual.indexes];
-      const ready = [...actual.ready];
+      // Ya se está cargando: dejar que termine.
+      if (
+        estado.indexes[espacioOculto] === destino &&
+        estado.pending === destino
+      ) {
+        return estado;
+      }
+
+      // Cargar el destino sin quitar la foto que se está mostrando.
+      const indexes = [...estado.indexes];
+      const ready = [...estado.ready];
 
       indexes[espacioOculto] = destino;
       ready[espacioOculto] = false;
 
       return {
-        ...actual,
+        ...estado,
         indexes,
         ready,
         pending: destino,
@@ -144,54 +152,63 @@ export default function Galeria() {
     });
   }
 
-  async function imagenCargada(espacio, fotoIndice, elemento) {
-    try {
-      // Esperamos también a que el navegador termine de decodificarla.
-      await elemento.decode?.();
-    } catch {
-      // Algunos navegadores pueden rechazar decode aunque onLoad funcione.
-    }
-
-    setCarrusel((actual) => {
-      // Ignorar un onLoad antiguo si el espacio ya muestra otra foto.
-      if (actual.indexes[espacio] !== fotoIndice) {
-        return actual;
+  function imagenCargada(espacio, fotoIndice) {
+    setCarrusel((estado) => {
+      // El usuario pudo solicitar otra foto mientras esta cargaba.
+      if (estado.indexes[espacio] !== fotoIndice) {
+        return estado;
       }
 
-      const ready = [...actual.ready];
+      const ready = [...estado.ready];
       ready[espacio] = true;
 
-      // Si el invitado pidió esta foto, ahora sí se puede mostrar.
-      if (actual.pending === fotoIndice && espacio !== actual.active) {
-        const indexes = [...actual.indexes];
-        const espacioAnterior = actual.active;
-
-        indexes[espacioAnterior] = indiceSiguiente(fotoIndice);
-        ready[espacioAnterior] = false;
-
-        return {
-          active: espacio,
-          indexes,
-          ready,
-          pending: null,
-        };
+      // Mostrarla si era la foto solicitada.
+      if (
+        estado.pending === fotoIndice &&
+        espacio !== estado.active
+      ) {
+        return activarFoto(
+          { ...estado, ready },
+          espacio,
+          fotoIndice
+        );
       }
 
-      return { ...actual, ready };
+      return { ...estado, ready };
+    });
+  }
+
+  function imagenFallida(espacio, fotoIndice) {
+    setCarrusel((estado) => {
+      if (estado.indexes[espacio] !== fotoIndice) {
+        return estado;
+      }
+
+      // Libera cualquier solicitud pendiente para que los controles
+      // y el cambio automático sigan funcionando.
+      if (estado.pending === fotoIndice) {
+        return { ...estado, pending: null };
+      }
+
+      return estado;
     });
   }
 
   useEffect(() => {
-    if (!primeraLista || carrusel.pending !== null || fotos.length < 2) {
+    if (
+      !fotoVisibleLista ||
+      carrusel.pending !== null ||
+      fotos.length < 2
+    ) {
       return undefined;
     }
 
     const temporizador = window.setTimeout(() => {
-      cambiarA(indiceSiguiente(indiceActual));
+      cambiarA(siguiente(indiceActual));
     }, 4500);
 
     return () => window.clearTimeout(temporizador);
-  }, [indiceActual, primeraLista, carrusel.pending]);
+  }, [indiceActual, fotoVisibleLista, carrusel.pending]);
 
   return (
     <section
@@ -277,35 +294,38 @@ export default function Galeria() {
             {[0, 1].map((espacio) => {
               const fotoIndice = carrusel.indexes[espacio];
               const foto = fotos[fotoIndice];
+              const visible = espacio === carrusel.active;
 
               return (
                 <img
-                  key={espacio}
+                  // Al cambiar de foto se crea un elemento nuevo,
+                  // por lo que onLoad vuelve a ejecutarse incluso
+                  // si la URL ya estaba en la caché.
+                  key={`${espacio}-${fotoIndice}`}
                   src={foto.src}
                   alt={
-                    espacio === carrusel.active
+                    visible
                       ? t(
                           `Fotografía ${fotoIndice + 1} de ${fotos.length} de Susana y Gnana`,
                           `Photo ${fotoIndice + 1} of ${fotos.length} of Susana and Gnana`
                         )
                       : ""
                   }
-                  aria-hidden={espacio !== carrusel.active}
+                  aria-hidden={!visible}
                   draggable="false"
                   decoding="async"
-                  onLoad={(evento) =>
-                    imagenCargada(
-                      espacio,
-                      fotoIndice,
-                      evento.currentTarget
-                    )
+                  onLoad={() =>
+                    imagenCargada(espacio, fotoIndice)
+                  }
+                  onError={() =>
+                    imagenFallida(espacio, fotoIndice)
                   }
                   className="foto-galeria absolute inset-0 h-full w-full object-cover"
                   style={{
                     "--posicion-movil": foto.mobilePosition,
                     "--posicion-escritorio": foto.position,
-                    opacity: espacio === carrusel.active ? 1 : 0,
-                    zIndex: espacio === carrusel.active ? 2 : 1,
+                    opacity: visible ? 1 : 0,
+                    zIndex: visible ? 2 : 1,
                     pointerEvents: "none",
                   }}
                 />
@@ -317,8 +337,8 @@ export default function Galeria() {
           <div className="flex items-center justify-center gap-5 px-4 py-5 sm:gap-8 sm:py-7">
             <button
               type="button"
-              onClick={() => cambiarA(indiceAnterior(indiceActual))}
-              disabled={!primeraLista || carrusel.pending !== null}
+              onClick={() => cambiarA(anterior(indiceActual))}
+              disabled={!fotoVisibleLista}
               aria-label={t(
                 "Fotografía anterior",
                 "Previous photo"
@@ -351,8 +371,8 @@ export default function Galeria() {
 
             <button
               type="button"
-              onClick={() => cambiarA(indiceSiguiente(indiceActual))}
-              disabled={!primeraLista || carrusel.pending !== null}
+              onClick={() => cambiarA(siguiente(indiceActual))}
+              disabled={!fotoVisibleLista}
               aria-label={t(
                 "Fotografía siguiente",
                 "Next photo"
