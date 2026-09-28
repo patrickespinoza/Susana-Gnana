@@ -267,11 +267,11 @@ export default function Galeria() {
 
           <p
             className="mt-3 text-3xl sm:text-4xl"
-            style={{
-              fontFamily:
-                "'Brittany Signature', 'Cedarville Cursive', cursive",
-              color: colores.burgundy,
-            }}
+           style={{
+  fontFamily: "'Allura', cursive",
+  fontWeight: 400,
+  color: colores.burgundy,
+}}
           >
             {t("Momentos para siempre", "Moments to cherish")}
           </p>

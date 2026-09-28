@@ -51,7 +51,11 @@ export default function DressCodePremium() {
         </h2>
         <p
           className="mt-2 text-3xl sm:text-4xl"
-          style={{ fontFamily: "'Brittany Signature', 'Cedarville Cursive', cursive", color: colores.burgundy }}
+          style={{
+  fontFamily: "'Allura', cursive",
+  fontWeight: 400,
+  color: colores.burgundy,
+}}
         >
           {t("Para este día especial", "For our special day")}
         </p>

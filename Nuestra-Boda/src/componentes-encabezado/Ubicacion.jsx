@@ -118,10 +118,10 @@ export default function EventoDireccion() {
           <p
             className="mt-2 text-3xl sm:text-4xl"
             style={{
-              fontFamily:
-                "'Brittany Signature', 'Cedarville Cursive', cursive",
-              color: colores.burgundy,
-            }}
+  fontFamily: "'Allura', cursive",
+  fontWeight: 400,
+  color: colores.burgundy,
+}}
           >
             Susana & Gnana
           </p>
