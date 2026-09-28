@@ -664,7 +664,7 @@ useEffect(() => {
                         text-lg
                         sm:text-xl
                       "
-                      style={{ color: palette.antiqueGold }}
+                      style={{ color: palette.ink }}
                     >
                       &
                     </span>
@@ -1240,7 +1240,7 @@ lg:pt-20
                 className="
                   font-cursiveDancing
                   text-2xl
-                  text-[#D6D2C4]
+                  text-[#6A2C3E]
                   sm:text-4xl
                 "
               >
