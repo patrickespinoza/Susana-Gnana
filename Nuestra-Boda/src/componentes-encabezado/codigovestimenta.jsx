@@ -13,8 +13,8 @@ const colores = {
 // Coloca las imágenes finales en public con estos nombres o cambia las rutas.
 // Si el texto está dentro de la imagen, necesitaremos una versión por idioma.
 const imagenes = {
-  es: "/vestimenta-es.jpg",
-  en: "/vestimenta-en.jpg",
+  es: "/vestimenta-es.jpeg",
+  en: "/vestimenta-en.jpeg",
 };
 
 export default function DressCodePremium() {
