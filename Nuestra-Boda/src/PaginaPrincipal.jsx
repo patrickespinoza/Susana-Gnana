@@ -4,6 +4,7 @@ import Confirmacion from "./componentes-encabezado/Confirmacion";
 import EventoDireccion from "./componentes-encabezado/Ubicacion";
 import DressCodePremium from "./componentes-encabezado/codigovestimenta";
 import Galeria from "./componentes-encabezado/Galeria";
+import MesaRegalos from "./componentes-encabezado/mesaregalos";
 
 
 
@@ -48,6 +49,8 @@ export default function PaginaPrincipal() {
 <Galeria/>
   
 <DressCodePremium/>
+
+<MesaRegalos/>
 
 <Confirmacion/>
   
